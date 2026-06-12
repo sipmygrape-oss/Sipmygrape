@@ -16,14 +16,14 @@ data = load_data()
 df = pd.DataFrame(data)
 
 # Zone de chat
-user_input = st.text_input("Pose ta question sur les vins :")
+user_input = st.text_input("Posez votre question sur les vins :")
 
 if user_input:
     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
     
-    # Conversion du JSON en texte propre
+    # Conversion du JSON en texte propre pour l'IA
     contexte = json.dumps(data, ensure_ascii=False)
-    contexte_court = contexte[:10000]
+    contexte_court = contexte[:10000] # Limite pour éviter les erreurs de taille
     
     with st.spinner('Le sommelier analyse tes goûts...'):
         completion = client.chat.completions.create(
@@ -32,12 +32,16 @@ if user_input:
                 {
                     "role": "system", 
                     "content": (
-                        "Tu es un sommelier expert. Tu as deux rôles : "
-                        "1. Analyser les vins que l'utilisateur a bus (fournis dans les données ci-dessous). "
-                        "2. Proposer des accords mets-vins et des conseils basés sur tes connaissances professionnelles, "
-                        "en te basant PRIORITAIREMENT sur le style, le cépage et le profil des vins présents dans les données de l'utilisateur. "
-                        "Si l'utilisateur demande un vin qui ne correspond pas du tout à ses habitudes, explique pourquoi. "
-                        "Voici les vins bus par l'utilisateur : " + contexte_court
+                        "Tu es un sommelier expert. Ta tâche est d'analyser les données de la cave de l'utilisateur. "
+                        "IMPORTANT : Dans tes réponses, utilise STRICTEMENT les noms tels qu'ils apparaissent dans les données. "
+                        "Ne jamais inventer de nom, ne pas mélanger domaine, appellation et cépage. "
+                        "Structure ta réponse ainsi :\n\n"
+                        "### 🍷 Dans ma cave\n"
+                        "- [Nom du vin] : [Pourquoi il correspond]\n"
+                        "- [Nom du vin] : [Pourquoi il correspond]\n\n"
+                        "### 🌟 Suggestion Sommelier\n"
+                        "- [Nom du vin] : [Lien avec mes goûts + prix estimé]\n\n"
+                        "Données de la cave : " + contexte_court
                     )
                 },
                 {"role": "user", "content": user_input}
